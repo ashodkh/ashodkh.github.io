@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ashod Khederlarian</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f9fafb;
+  --bg2:#f3f4f6;
+  --card:#ffffff;
+  --accent:#2563eb;
+  --accent-dim:#eff6ff;
+  --text:#111827;
+  --muted:#6b7280;
+  --muted2:#9ca3af;
+  --border:#e5e7eb;
+  --border2:#d1d5db;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.6;overflow-x:hidden;}
+
+/* NAV */
+nav{
+  position:fixed;top:0;width:100%;z-index:100;
+  background:rgba(249,250,251,0.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;height:56px;
+}
+.nav-logo{
+  font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  color:var(--accent);text-decoration:none;letter-spacing:.04em;font-weight:500;
+}
+.nav-links{display:flex;gap:2rem;list-style:none;align-items:center;}
+.nav-links a{
+  color:var(--muted);text-decoration:none;font-size:.85rem;font-weight:400;
+  transition:color .15s;
+}
+.nav-links a:hover{color:var(--text);}
+.nav-links a.gh{
+  color:var(--accent);border:1px solid rgba(37,99,235,0.3);
+  padding:.25rem .85rem;border-radius:5px;font-size:.8rem;font-weight:500;
+}
+.nav-links a.gh:hover{background:var(--accent-dim);}
+
+/* HERO */
+#hero{
+  min-height:100vh;display:flex;align-items:center;
+  padding:7rem 2.5rem 5rem;
+  border-bottom:1px solid var(--border);
+}
+.hero-inner{max-width:960px;margin:0 auto;width:100%;
+  display:grid;grid-template-columns:auto 1fr;gap:4rem;align-items:center;
+}
+@media(max-width:700px){.hero-inner{grid-template-columns:1fr;text-align:center;gap:2rem;}}
+.avatar-img{
+  width:180px;height:180px;border-radius:50%;object-fit:cover;
+  border:3px solid var(--border);
+  box-shadow:0 4px 24px rgba(0,0,0,0.08);
+  display:block;
+}
+@media(max-width:700px){.avatar-img{margin:0 auto;}}
+.hero-right{}
+.hero-name{
+  font-size:2.4rem;font-weight:700;color:var(--text);
+  letter-spacing:-.03em;line-height:1.15;margin-bottom:.4rem;
+}
+.hero-role{font-size:1rem;color:var(--muted);font-weight:400;margin-bottom:.25rem;}
+.hero-inst{font-size:.95rem;color:var(--accent);font-weight:500;margin-bottom:1.75rem;}
+.hero-desc{
+  font-size:.97rem;line-height:1.85;color:var(--muted);
+  max-width:560px;margin-bottom:2rem;
+}
+.hero-desc strong{color:var(--text);font-weight:500;}
+@media(max-width:700px){.hero-desc{margin:0 auto 2rem;}}
+.hero-links{display:flex;gap:.75rem;flex-wrap:wrap;}
+@media(max-width:700px){.hero-links{justify-content:center;}}
+.btn{
+  display:inline-flex;align-items:center;gap:.4rem;
+  padding:.55rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:500;
+  text-decoration:none;transition:all .15s;
+}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-ghost{
+  border:1px solid var(--border2);color:var(--muted);background:var(--card);
+}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+/* SECTIONS */
+section{position:relative;padding:5.5rem 2.5rem;border-bottom:1px solid var(--border);}
+.container{max-width:960px;margin:0 auto;}
+.section-eyebrow{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:500;
+  color:var(--accent);letter-spacing:.18em;text-transform:uppercase;margin-bottom:.5rem;
+}
+h2.section-title{
+  font-size:1.6rem;font-weight:700;color:var(--text);
+  margin-bottom:2.5rem;letter-spacing:-.02em;
+}
+
+/* RESEARCH */
+.research-body{font-size:.97rem;line-height:1.9;color:var(--muted);max-width:720px;}
+.research-body a{color:var(--accent);text-decoration:none;}
+.research-body a:hover{text-decoration:underline;}
+.collab-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.75rem;}
+.collab-tag{
+  display:inline-flex;align-items:center;
+  padding:.3rem .9rem;border-radius:5px;font-size:.8rem;font-weight:500;
+  border:1px solid var(--border2);color:var(--muted);
+  background:var(--card);text-decoration:none;transition:all .15s;
+}
+.collab-tag:hover{border-color:var(--accent);color:var(--accent);}
+
+/* PROJECTS */
+#projects{background:var(--bg2);}
+.projects-list{display:flex;flex-direction:column;gap:1.25rem;}
+.project-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;transition:box-shadow .2s,border-color .2s;
+}
+.project-card:hover{box-shadow:0 4px 24px rgba(0,0,0,0.07);border-color:var(--border2);}
+.card-header{
+  padding:1.75rem 2rem 0;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+.card-num{
+  font-family:'JetBrains Mono',monospace;font-size:.68rem;
+  color:var(--muted2);letter-spacing:.1em;margin-bottom:.5rem;
+}
+.card-title{
+  font-size:1.05rem;font-weight:600;color:var(--text);line-height:1.4;
+}
+.badge{
+  display:inline-block;padding:.2rem .65rem;border-radius:4px;
+  font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;margin-top:.15rem;flex-shrink:0;
+}
+.badge-pub{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
+.badge-talk{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;}
+.badge-res{background:#f9fafb;color:#6b7280;border:1px solid #e5e7eb;}
+.card-body{padding:1.25rem 2rem;}
+.card-text{font-size:.92rem;line-height:1.85;color:var(--muted);margin-bottom:.85rem;}
+.card-text:last-child{margin-bottom:0;}
+.card-text a{color:var(--accent);text-decoration:none;}
+.card-text a:hover{text-decoration:underline;}
+.card-img{
+  width:100%;border-radius:6px;margin:1rem 0;
+  border:1px solid var(--border);display:block;
+}
+.card-img.constrain{max-width:420px;}
+.card-footer{
+  padding:.75rem 2rem 1.5rem;
+  display:flex;gap:.6rem;flex-wrap:wrap;border-top:1px solid var(--border);
+  margin-top:1rem;
+}
+.card-link{
+  display:inline-flex;align-items:center;gap:.35rem;
+  font-size:.82rem;font-weight:500;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border);padding:.35rem .85rem;border-radius:5px;
+  background:var(--bg);transition:all .15s;
+}
+.card-link:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;}
+@media(max-width:640px){.about-grid{grid-template-columns:1fr;gap:2.5rem;}}
+.about-text{font-size:.95rem;line-height:1.9;color:var(--muted);}
+.tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.5rem;}
+.tag{
+  padding:.28rem .8rem;border-radius:5px;font-size:.78rem;font-weight:400;
+  background:var(--bg2);border:1px solid var(--border);color:var(--muted);
+}
+.code-block{
+  background:#f8fafc;border:1px solid var(--border);border-radius:8px;
+  padding:1.5rem 1.75rem;font-family:'JetBrains Mono',monospace;
+  font-size:.78rem;line-height:2;color:#94a3b8;
+}
+.c-kw{color:#7c3aed;} .c-fn{color:#0369a1;} .c-str{color:#15803d;} .c-punc{color:#94a3b8;}
+
+/* CONTACT */
+#contact{}
+.contact-inner{max-width:480px;}
+.contact-text{font-size:.97rem;color:var(--muted);line-height:1.8;margin-bottom:2rem;}
+.email-link{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:500;
+  color:var(--accent);text-decoration:none;
+  border:1px solid rgba(37,99,235,0.25);padding:.7rem 1.2rem;border-radius:6px;
+  background:var(--accent-dim);transition:all .15s;margin-bottom:1.25rem;
+  display:block;
+}
+.email-link:hover{background:#dbeafe;border-color:var(--accent);}
+
+/* FOOTER */
+footer{
+  text-align:center;padding:1.5rem;
+  border-top:1px solid var(--border);
+  font-size:.78rem;color:var(--muted2);
+}
+footer a{color:var(--muted2);text-decoration:none;}
+footer a:hover{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#hero">AK</a>
+  <ul class="nav-links">
+    <li><a href="#research">Research</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="https://github.com/ashodkh" target="_blank" class="gh">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <div>
+      <img src="images/avatar.jpg" alt="Ashod Khederlarian" class="avatar-img"/>
+    </div>
+    <div class="hero-right">
+      <h1 class="hero-name">Ashod Khederlarian</h1>
+      <p class="hero-role">PhD Student</p>
+      <p class="hero-inst">University of Pittsburgh</p>
+      <p class="hero-desc">I use <strong>Machine Learning and AI</strong> to understand the Universe. My research focuses on applying neural networks, CNNs, contrastive learning, and transformers to large astronomical datasets — with an emphasis on measuring galactic distances.</p>
+      <div class="hero-links">
+        <a href="https://ui.adsabs.harvard.edu/search/fq=%7B!type%3Daqp%20v%3D%24fq_database%7D&fq_database=(database%3Aastronomy%20OR%20database%3Aphysics)&q=%20author%3A%22ashod%20khederlarian%22&sort=date%20desc%2C%20bibcode%20desc&p_=0" target="_blank" class="btn btn-primary">Publications ↗</a>
+        <a href="mailto:ask126@pitt.edu" class="btn btn-ghost">ask126@pitt.edu</a>
+        <a href="https://github.com/ashodkh" target="_blank" class="btn btn-ghost">GitHub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESEARCH -->
+<section id="research">
+  <div class="container">
+    <div class="section-eyebrow">Research</div>
+    <h2 class="section-title">What I Work On</h2>
+    <p class="research-body">
+      I am interested in applying machine learning — neural networks, CNNs, contrastive learning, Generative AI, and transformers — to large astronomical datasets. A key ingredient to studying cosmology and galaxy evolution is knowing distances to galaxies, which is the primary focus of my research. I am part of the <a href="https://www.desi.lbl.gov/" target="_blank">Dark Energy Spectroscopic Instrument (DESI) Collaboration</a> and the <a href="https://lsstdesc.org/" target="_blank">Legacy Survey of Space and Time Dark Energy Science Collaboration (LSST DESC)</a>.
+    </p>
+    <div class="collab-row">
+      <a href="https://www.desi.lbl.gov/" target="_blank" class="collab-tag">DESI Collaboration</a>
+      <a href="https://lsstdesc.org/" target="_blank" class="collab-tag">LSST DESC</a>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="container">
+    <div class="section-eyebrow">Projects</div>
+    <h2 class="section-title">Selected Work</h2>
+    <div class="projects-list">
+
+      <div class="project-card">
+        <div class="card-header">
+          <div>
+            <div class="card-num">01 / 03</div>
+            <div class="card-title">JAX Neural Network to Predict Galactic Neon Lights</div>
+          </div>
+          <span class="badge badge-pub">Published · MNRAS</span>
+        </div>
+        <div class="card-body">
+          <p class="card-text">If you've ever seen images of spiral galaxies, you might have noticed glowing red or pink spots sprinkled throughout. These galactic neon lights are actually clouds of hydrogen gas, lit up by the intense radiation of young, massive stars — similar to how neon signs work, except starlight drives the process instead of electricity.</p>
+          <img src="images/M51.jpeg" alt="M51 Galaxy" class="card-img"/>
+          <p class="card-text">We trained a JAX-implemented neural network on the <a href="https://www.desi.lbl.gov/2023/06/13/the-desi-early-data-release-in-now-available/" target="_blank">DESI early data release</a> to predict the strengths of emission lines from starlight. When galaxy light is split into its constituent wavelengths, it produces a spectrum — most of the light comes from stars as a smooth continuum, and the emission lines appear as sharp spikes on top. We show these two sources are strongly correlated, since emission lines are produced when gas is ionized by stellar light, and the starlight encodes the galaxy's star formation history.</p>
+          <img src="images/dash_spectra_screenshot.png" alt="UMAP visualization" class="card-img"/>
+          <p class="card-text">To visualize this correlation, I built an interactive Dash/Plotly app showing a 2D UMAP projection of starlight for 1,000 galaxies, color-coded by H-alpha emission strength. Galaxies with strong H-alpha emission have the youngest stars (blue continua), while weak emission corresponds to the oldest (red continua).</p>
+        </div>
+        <div class="card-footer">
+          <a href="https://academic.oup.com/mnras/article/531/1/1454/7665770" target="_blank" class="card-link">Read Paper ↗</a>
+          <a href="https://dash-with-umap.onrender.com" target="_blank" class="card-link">Interactive Demo ↗</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="card-header">
+          <div>
+            <div class="card-num">02 / 03</div>
+            <div class="card-title">Estimating Galaxy Distances from Space-based Images Using Semi-Supervised Deep Learning</div>
+          </div>
+          <span class="badge badge-talk">Talk · AstroAI 2024</span>
+        </div>
+        <div class="card-body">
+          <p class="card-text">Galactic distances are a key ingredient to understanding how the universe and galaxies formed and evolved. Measuring distances reliably involves resource-intensive spectroscopy, while estimating them from images is more efficient but less accurate. With reliable spectroscopic measurements for a fraction of imaged galaxies, ML algorithms can estimate the distances of the rest.</p>
+          <p class="card-text">Deep CNNs are effective at estimating distances to nearby galaxies from ground-based images, but have not been tested for more distant galaxies due to limited training data. Upcoming observatories like the <a href="https://roman.gsfc.nasa.gov" target="_blank">Nancy Grace Roman Space Telescope</a> will provide high-resolution images of hundreds of millions of distant galaxies, making this a timely challenge to address.</p>
+          <p class="card-text">We curated a catalog of ~100,000 <a href="https://science.nasa.gov/mission/hubble/" target="_blank">Hubble Space Telescope (HST)</a> images, ~20,000 with reliable distance labels. Our semi-supervised approach uses unlabeled images with color prediction and contrastive learning losses, then aligns the latent space via a distance prediction loss on labeled data. For bright galaxies, our method reduces bias by 87%, NMAD by 20%, and fraction of outliers by 47% compared to traditional methods.</p>
+          <img src="images/semi_supervised_architecture.png" alt="Model architecture" class="card-img"/>
+          <img src="images/final_examples_for_neighbors.png" alt="Neighbor comparison" class="card-img"/>
+        </div>
+        <div class="card-footer">
+          <a href="https://youtu.be/uxc27HPdLaM?t=00" target="_blank" class="card-link">Watch Talk ↗</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="card-header">
+          <div>
+            <div class="card-num">03 / 03</div>
+            <div class="card-title">Detecting Gravitational Waves with Generative AI</div>
+          </div>
+          <span class="badge badge-res">Research</span>
+        </div>
+        <div class="card-body">
+          <p class="card-text">Instruments like <a href="https://www.ligo.caltech.edu/page/faq" target="_blank">LIGO</a> are extremely sensitive, making them susceptible to noise from mirror vibrations, earthquakes, and even traffic. This makes it difficult to differentiate between real gravitational wave signals and noise. Statistical methods could detect GWs if the noise were Gaussian — but the noise is non-Gaussian and difficult to model analytically.</p>
+          <img src="images/gw_and_noise.png" alt="GW signals" class="card-img"/>
+          <p class="card-text">I used a normalizing flow — a generative AI model that parameterizes unknown distributions — to learn the noise distribution from both LIGO detectors (Hanford and Livingston). Once the noise distribution is learned, gravitational waves can be detected as statistical outliers. This approach achieved a 92% AUC score, indicating strong ability to distinguish real GW signals from noise.</p>
+          <img src="images/ROC_curve.png" alt="ROC Curve" class="card-img constrain"/>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="section-eyebrow">About</div>
+    <h2 class="section-title">About Me</h2>
+    <div class="about-grid">
+      <div>
+        <p class="about-text">I am Lebanese-Armenian, born and raised in Lebanon. I am currently a 4th year PhD student at the University of Pittsburgh, where I apply machine learning and AI to problems in observational astronomy and cosmology.</p>
+        <br/>
+        <p class="about-text">Outside of research, I enjoy rock climbing, playing football (soccer), and photography. I love exploring new places.</p>
+        <div class="tags">
+          <span class="tag">Rock Climbing</span>
+          <span class="tag">Football</span>
+          <span class="tag">Photography</span>
+          <span class="tag">Traveling</span>
+        </div>
+      </div>
+      <div class="code-block">
+        <span class="c-kw">const</span> <span class="c-fn">ashod</span> <span class="c-punc">= {</span><br/>
+        &nbsp;&nbsp;role<span class="c-punc">:</span> <span class="c-str">"PhD Student"</span><span class="c-punc">,</span><br/>
+        &nbsp;&nbsp;university<span class="c-punc">:</span> <span class="c-str">"Pittsburgh"</span><span class="c-punc">,</span><br/>
+        &nbsp;&nbsp;focus<span class="c-punc">:</span> <span class="c-str">"ML × Astronomy"</span><span class="c-punc">,</span><br/>
+        &nbsp;&nbsp;collab<span class="c-punc">: [</span><span class="c-str">"DESI"</span><span class="c-punc">,</span> <span class="c-str">"LSST DESC"</span><span class="c-punc">],</span><br/>
+        &nbsp;&nbsp;tools<span class="c-punc">: [</span><span class="c-str">"PyTorch"</span><span class="c-punc">,</span> <span class="c-str">"JAX"</span><span class="c-punc">,</span><br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c-str">"CNNs"</span><span class="c-punc">,</span> <span class="c-str">"Transformers"</span><span class="c-punc">],</span><br/>
+        &nbsp;&nbsp;origin<span class="c-punc">:</span> <span class="c-str">"Lebanon"</span><br/>
+        <span class="c-punc">}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container">
+    <div class="section-eyebrow">Contact</div>
+    <h2 class="section-title">Get In Touch</h2>
+    <div class="contact-inner">
+      <p class="contact-text">Whether you want to collaborate on research, discuss ML for astronomy, or just say hello — feel free to reach out.</p>
+      <a href="mailto:ask126@pitt.edu" class="email-link">ask126@pitt.edu</a>
+      <a href="https://github.com/ashodkh" target="_blank" class="btn btn-ghost">GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© Ashod Khederlarian &nbsp;·&nbsp; Design: <a href="http://html5up.net" target="_blank">HTML5 UP</a></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+---
+layout: default
+title: How Good Are Your Uncertainties? 
+---
+
+<section id="uq-full" class="page-section card-page">
+	<div class="project-header" style="background-image: url('{{ '/images/foggy_road.png' | relative_url }}'); background-position: center 70%;">
+		<span class="header-date">2024</span>
+		<h3>How Good Are Your Uncertainties?</h3>
+	</div>
+
+	<div class="section-inner">
+		<a href="{{ '/blog' | relative_url }}" class="back-link">&larr; Back to Blogs</a>
+
+		<div class="project">
+			<h4> Uncertainty Quantification </h4>
+			<img src="{{ '/images/be_condensate.png' | relative_url }}" alt="be_condensate" style="width: 100%; max-height: 250px; object-fit: cover; object-position: center 20%"/>
+			<p>
+				There are endless problems in physics where simple point estimates are not enough; we would prefer
+				probability distribution functions (PDFs) of parameters. For example, cosmological and galaxy evolution studies can be sensitive to not
+				only how far away a galaxy (or a group of galaxies) is, but to what is the probability that it is at a distance z.
+				Beyond a measurement of the most likely parameter value, these PDFs also provide a sense of uncertainty via probabilities 
+				for all possible parameter values.
+			</p>
+			<p>
+				Every field, including astronomy, will have a myriad of methods that provide different PDFs for the same parameter.
+				These methods can be empirical (think data-driven, machine learning), or based on a physical model (and assumptions that come with it). 
+				Either way, which of the distributions are correct? How can we quantify the performance of these methods? In this blog, I will focus on
+				a canonical example in astrophysics: photometric redshift (photo-z) estimation. You can think of 
+				<a href="https://en.wikipedia.org/wiki/Redshift" target="_blank"> redshift </a> as a proxy for a galaxy's distance from Earth. Checkout 
+				<a href="{{ '/research/photo-zs.html' | relative_url }}">my blog on estimating distances to galaxies with deep learning</a> for more on redshift!
+			</p>
+
+			<h4> Data </h4>
+			<p>
+				The main difficulty stems from the fact that we do not know the true PDFs. For a galaxy, we estimate its distance (z) based on its
+				images (x). Our algorithms therefore provide an estimate of the PDF conditioned on the galaxy images (x),
+				or a conditonal density estimate (CDE) \(\tilde{P}(z|x).\) If we know the true conditional density \(P(z|x)\), then we can use
+				many metrics that measure "distances" between probability distributions,
+				such as <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence" target="_blank">KL divergence</a>
+				and <a href="https://en.wikipedia.org/wiki/Earth_mover%27s_distance" target="_blank">Earth mover's distance</a>. If \(P(z|x)\) 
+				is not available, then we have to use point estimates.
+			</p>
+			<p>
+				We can obtain a very accurate ("true") measurement of distance via spectroscopy, however that gives us only a single sample 
+				from the CDE \(P(z|x)\). Even if we make multiple spectroscopic measurements, that does not mean we will have multiple samples from \(P(z|x)\).
+				We will only have multiple samples from \(P(z|s)\), where \(s\) is the spectrum of a galaxy; <sup><a href="#fn1" id="ref1">1</a></sup>
+				this does not help us with \(P(z|x)\). In short, since the true conditional density \(P(z|x)\) is not available,
+				we will use many pairs of \((z,x)\) (test dataset), obtained via spectroscopic measurements, to evaluate the performance of these algorithms.
+			</p>
+			<p>
+				Suppose that the true conditional density is a Gaussian, \(P(z|x) = N(\mu_\mathrm{true},\sigma_\mathrm{true})\),
+				and our predicted CDE is also a Gaussian with the same \(\sigma_\mathrm{true}\) but centered at a different location,
+				\(\tilde{P}(z|x)=N(\mu_\mathrm{pred},\sigma_\mathrm{true})\). <a href="#fig:gaussian_example">Figure 1</a> illustrates
+				both distributions, along with a single sample point (\(z_i\) shown as an X) from our test dataset. The right panel shows
+				the cumulative distribution functions (CDFs) for these PDFs. Notice how when we use the value \(z_i\) to calculate its probability or 
+				CDF (with our estimated CDE), we obtain values that are very different from truth.   
+			</p>
+
+			<figure id="fig:gaussian_example">
+				<img src="{{ '/images/gaussian_example.png' | relative_url }}" alt="gaussian example" style="max-width: 700px;"/>
+				<figcaption>Figure 1: True conditional density (blue), our estimated CDE (red), and a single sample (X) obtained with a spectroscopic measurement.
+							The left plot shows the probability distributions, and the right plot shows the cumulative distributions.
+				</figcaption>
+			</figure>
+
+			<p>
+				Indeed, CDFs have a well-known property which we can exploit. Given a random variable \(Y\) with CDF \(C_{Y}\), the transformed
+				variable \(\gamma=C_Y(Y)\) (also known as probability integral transforms, or PITs) will follow a uniform distribution. This can 
+				be shown with a few lines of math:
+				\[\begin{align}
+					C_\gamma(y) &= P(\gamma \le y) \\
+					&= P(C_Y(Y) \le y) \\
+					&= P(Y \le C_Y^{-1}(y)) \\
+					&= C_Y(C_Y^{-1}(y)) \\
+					&= y.
+					\end{align}\]
+
+				Therefore, since the CDF of \(\gamma\) is linear, then \(\gamma\) follows a uniform distribution.
+				This means that if we have a bunch of samples \(z_i\) from \(P(z|x)\), and we calculate \(\gamma_i=C(z_i|x)\), then \(\gamma\)
+				will follow a uniform distribution. This is illustrated in the left panel of <a href="#fig:pit_distributions">figure 2</a>. Importantly, if we calculate
+				\(\tilde{\gamma}_i=\tilde{C}(z_i|x)\) from our estimate \(\tilde{C}\), then \(\tilde{\gamma}_i\) will be uniform
+				<strong>if and only if \(\tilde{C} = C\)</strong>, i.e., if our estimated PDF is the true PDF. If this is not the case, then \(\tilde{\gamma}\)
+				will not be uniform. This is illustrated in the right panel of <a href="#fig:pit_distributions">figure 2</a>. 
+			</p>
+
+			<figure id="fig:pit_distributions">
+				<img src="{{ '/images/pit_distributions.png' | relative_url }}" alt="pit distributions" style="max-width: 700px;"/>
+				<figcaption>Figure 2: PIT distributions from the true CDF (left) and the estimated CDF (right).
+				</figcaption>
+			</figure>
+			
+			<br>
+		</div>
+	</div>
+	<div class="footnotes">
+      <ol>                                                                                               
+          <li id="fn1">        
+				Typically, a galaxy's spectrum provides a very accurate measurement of redshift, so we assume \(P(z|s) = \delta(z)\). Where \(\delta\)
+				is the Dirac delta function.                            
+              	<a href="#ref1">&#8617;</a>
+          </li>                                                                                          
+      </ol>                                                 
+  	</div> 
+</section>

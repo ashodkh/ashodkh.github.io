@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<title>{% if page.title %}{{ page.title }} | {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+		<meta name="description" content="{{ site.description }}" />
+		<link rel="stylesheet" href="{{ '/assets/css/fontawesome-all.min.css' | relative_url }}" />
+		<link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+	</head>
+	<body>
+
+		<!-- Top Navigation -->
+		<nav id="topnav">
+			<a class="site-name" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+			<nav>
+				<a href="{{ '/blog' | relative_url }}">Blogs</a>
+				<a href="{{ '/about' | relative_url }}">About Me</a>
+				<a href="{{ '/contact' | relative_url }}">Contact</a>
+			</nav>
+		</nav>
+
+		<div id="page-wrapper">
+			{{ content }}
+		</div>
+
+		<!-- Footer -->
+		<div id="footer">
+			<p>&copy; {{ site.title }}</p>
+		</div>
+
+	</body>
+</html>

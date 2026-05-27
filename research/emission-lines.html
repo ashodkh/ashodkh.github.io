@@ -1,0 +1,140 @@
+---
+layout: default
+title: JAX Neural Network to Predict Galactic Neon Lights
+---
+
+<section id="emission-lines-full" class="page-section card-page">
+	<div class="section-inner">
+		<a href="{{ '/research' | relative_url }}" class="back-link">&larr; Back to Research</a>
+
+		<div class="project">
+			<h3>JAX Neural Network to Predict Galactic Neon Lights
+				<a href="https://academic.oup.com/mnras/article/531/1/1454/7665770" target="_blank">Published in MNRAS</a>
+			</h3>
+			<h4> Introduction </h4>
+			<p>
+				If you've ever seen images of spiral galaxies, you might have noticed glowing red or pink spots sprinkled throughout
+				 (<a href="fig:m51">figure 1</a>).
+				These galactic neon lights are actually clouds of hydrogen gas, lit up by the intense radiation of young, massive stars.
+				The process is similar to how neon signs work -- except instead of electricity exciting the gas, it's starlight!
+				If starlight is responsible for these glowing regions, can a neural network predict them?
+			</p>
+
+			<figure id="fig:m51">
+				<img src="{{ '/images/M51.jpeg' | relative_url }}" alt="M51 galaxy" style="max-width: 500px;"/>
+				<figcaption>Figure 1: The M51 galaxy, showing glowing red regions of ionized gas. Image from the Hubble Space Telescope.</figcaption>
+			</figure>
+			
+			<p>
+				To separate the starlight from the light emitted by the gas, we need to split the total light coming from a galaxy into 
+				its constituent wavelengths. This is called a spectrum. Most of the light comes from stars, which produce a smooth spectrum,
+				and the neon lights coming from gas appear as spikes on top of the smooth spectrum.
+				These spikes are called emission lines. <a href="fig:masked_spectrum">Figure 2</a> shows an example DESI spectrum (more on DESI below), with orange showing starlight 
+				and black showing starlight + emission lines.
+				We expect these two sources to be strongly correlated, as emission lines are produced when the gas is ionized
+				by the light emitted from the stars, and the starlight holds information on the history of star formation of the galaxy, which is what determines the content
+				of the gas. In this work, we trained a neural network to predict the neon lights from starlight.
+				<figure id="fig:masked_spectrum">
+					<img src="{{ '/images/masked_spectrum.png' | relative_url }}" alt="masked_spectrum" style="max-width: 700px;"/>
+					<figcaption>Figure 2: A DESI spectrum showing the continuum (starlight) and emission lines (light from gas). The bottom panels show 
+						zoom-ins on some of the most prominent emission lines, including [OII] and H&alpha;.
+					</figcaption>
+				</figure>
+				
+
+			</p>
+			<h4> Data </h4>
+			<p>
+				The Dark Energy Spectroscopic Instrument (<a href="https://www.desi.lbl.gov" target="_blank">DESI</a>)
+				is a 5000-fiber spectrograph installed on the Mayall 4m telescope at Kitt Peak National Observatory. It is a remarkable
+				instrument that can obtain roughly 5000 galaxy spectra at the same time! Over the course of 5 years of operation, DESI obtained
+				47 million spectra and created the <a href="https://noirlab.edu/public/news/noirlab2610/?lang" target="_blank">largest 3D map of our Universe to date!</a>
+				We used these spectra (a small subset of them, not 47 million!) to train a JAX-implemented neural network to predict the strengths of emision lines (or neon lights)
+				of galaxies from their starlight.
+				<br>
+				<br>
+				Before training, we needed to pre-process the data.
+				Given DESI's spectral resolution, each spectrum has ~10,000 pixels. In other words, each spectrum can be thought of as a point in 10,000-dimensional space.
+				<a href="https://en.wikipedia.org/wiki/Curse_of_dimensionality" target="_blank">The curse of dimensionality</a> makes it difficult to train a neural network
+				in such a high-dimensional space with limited training set size. Besides, there's a lot of noise in the spectrum (small random spikes) that we would like to throw away -- we only care
+				about the smooth shape of the continuum. To achieve this, we averaged the flux in 12 consecutive top-hat bins, reducing the dimensionality
+				from ~10,000 to only 12! This not only drastically reduces the dimensionality, but also increases the signal-to-noise ratio.
+				<sup><a href="#fn1" id="ref1">1</a></sup>
+				In addition, we represent the strength of each emission line by a single number called the
+				<a href="https://en.wikipedia.org/wiki/Equivalent_width" target="_blank">Equivalent Width</a> (EW).
+				If you want more details on this, check out <a href="https://academic.oup.com/mnras/article/531/1/1454/7665770?guestAccessKey=" target="_blank">my paper</a>.
+				In summary, we reduced the complicated high-dimensional problem into a simpler one, where the continuum is represented by 12 numbers (average fluxes),
+				and each emission line is represented by a single number (its strength, or EW).
+				
+
+			</p>
+			<h4> Method </h4>
+			<p>
+				One of the goals of this work was to use our DESI-trained neural network to add realistic emission lines on synthetically generated continua. 
+				Both the continuum generation pipeline and our emission-line add-on must be fast, differentiable, and scalable, as together they can be used
+				to model large populations of galaxies and infer population distributions of physical parameters. 
+				There already exists a continuum generating pipeline which satisfies these requirements, called 
+		    	<a href="https://academic.oup.com/mnras/article/521/2/1741/7034352" target="_blank">DSPS</a>, 
+				and it is implemented in <a href="https://docs.jax.dev/en/latest/notebooks/thinking_in_jax.html" target="_blank">JAX</a>. 
+				To be compatible with DSPS, we also trained our neural network in JAX (checkout my implementation on 
+				<a href="https://github.com/ashodkh/JAX-MLP" target="_blank">Github</a>).
+				<figure id="fig:jax_nn">
+					<img src="{{ '/images/jax_nn.png' | relative_url }}" alt="jax_nn" style="max-width: 700px;"/>
+					<figcaption>Figure 3: We use a simple JAX neural network to predict emissions lines from continua. The continua
+						are represented as 12 average fluxes, and the emission lines are represented by a single number, the EW, which is 
+						a measure of emission line strength relative to the continuum. We train a different neural network for each emission line.
+					</figcaption>
+				</figure>
+			</p>
+			<h4> Results </h4>
+			<p>
+				The traditional, quantitative way of analyzing these results would be to plot the predicted emission line EWs versus
+				the true EWs, and see how close the points are to the 1-to-1 diagonal line. We do this in 
+				<a href="https://academic.oup.com/mnras/article/531/1/1454/7665770?guestAccessKey=" target="_blank">my paper</a>, along with
+				calculating robust statistical metrics such as the spearman correlation coefficient and normalized median absolute deviation.
+				Our network outperforms traditional methods that use Principal Component Analysis (PCA) and k-NN, while also being ~400x faster,
+				because inference with neural networks is very fast (amortized inference)!
+				<br>
+				<br>
+				Here, I want to talk about another way we analyzed the results, which is less quantiative but I believe more insightful. Ideally,
+				we would like to see performance as a function of input -- i.e., for different galaxy populations with different continua, how well
+				is our network doing? To achieve this, we used <a href="https://umap-learn.readthedocs.io/en/latest/" target="_blank">UMAP</a> to reduce
+				the 12-dimensional continuum space into two dimensions. With these 2D embeddings, we made scatter plots color-coded with the true emission line
+				strength and predicted emission line strength. 
+				<br>
+				<br>
+				<a href="fig:continua_map">Figure 4</a> shows the 2D UMAP embeddings of the continua color-coded with emission line strength. First, in the "observed"
+				panels, we see that there are gradients in emission line strength. Different parts of UMAP space, corresponding to different types of galaxies,
+				have different emission line strengths. This is good! Otherwise, we wouldn't be able to train a network to predict emission lines from continua.
+				However, we see that there's a lot of noise and scatter in these trends (the ocassional black point in a sea of yellow and orange points and vice versa). These appear 
+				for two main reasons: 1) knowing the galaxy continuum will not exactly tell you the emission lines, because they also depend on the properties of
+				the gas in the galaxy (which is not captured by the continua), and 2) astrophysical data is noisy. The emission line measurements are not perfect, and there's
+				a good amount of uncertainty on the values. This is the case for many astrophysical datasets, making applications of ML in astronomy particularly challenging.
+				The "predicted" panels show much smoother trends across this UMAP space. This is also good! It means our model is not overfitting, and the predictions are roughly
+				the average values of the true emission line EWs in local neighborhoods. Interestingly, when we add noise to our predictions (pred. + noise panels), we recover
+				some of the scatter that we see in the "observed" panels. This is crucial if we want to generate emission lines that look realistic and noisy. Notice that 
+				this behavior is not the same in all panels. For example, noise in [OII] (top left) is more prominent, because it is harder to measure.
+
+				<figure id="fig:continua_umap">
+					<img src="{{ '/images/continua_umap.png' | relative_url }}" alt="continua_umap" style="max-width: 900px;"/>
+					<figcaption>Figure 4: A test of line prediction accuracy across the input galaxy continua space. The UMAP values do not have direct
+						physical meaning, they are just mathematical projections from 12 dimensions to two. The different panels show
+						four different prominent emission lines of interest. We plot the observed EWs, the EWs predicted by our JAX neural network,
+						and the predictions with noise added.
+					</figcaption>
+				</figure>
+			</p>
+			<p>
+				Now, you may be wondering, what are the different populations of galaxies across this UMAP space? You can discover this yourself by playing
+				around with an interactive plot that I made using Dash and Plotly. It can be accessed with <a href="https://dash-with-umap.onrender.com" target="_blank">this link</a>
+				(it might take a moment to load, and the UMAP figure is inverted, sorry!). To first order, galaxies can be separated into "red" and "blue".
+				Red galaxies are old, dead, and do not form any new stars.
+				Blue galaxies are young, alive, and forming new stars. Which ones do you think will have stronger emission lines? Can you locate them in this UMAP space?
+			</p>
+			<p>
+				If you would like to play around with the model and use it to add emission lines on your continua, you can find more information on my
+				 <a href="https://github.com/ashodkh/emission-lines" target="_blank">Github</a>, and please feel free to reach out to my email!
+			</p>
+		</div>
+	</div>
+</section>

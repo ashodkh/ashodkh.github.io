@@ -1,0 +1,357 @@
+---
+layout: default
+title: Estimating Distances to Galaxies Using Semi-Supervised Deep Learning
+---
+
+<section id="photo-zs-full" class="page-section card-page">
+	<div class="project-header" style="background-image: url('{{ '/images/cosmic_cartography.png' | relative_url }}'); background-position: top;">
+		<span class="header-date">2026</span>
+		<h3>Semi-supervised Deep Learning for Galaxy Distance Estimation</h3>
+		<a href="https://youtu.be/uxc27HPdLaM?t=00" target="_blank" class="talk-link">Talk at Harvard AstroAI 2024 &rarr;</a>
+	</div>
+
+	<div class="section-inner">
+		<a href="{{ '/research' | relative_url }}" class="back-link">&larr; Back to Research</a>
+
+		<div class="project">
+			<h4> Measuring Distances to Galaxies with Next-generation Telescopes </h4>
+			<img src="{{ '/images/red_and_blue.jpeg' | relative_url }}" alt="redshift" style="width: 100%; max-height: 250px; object-fit: cover;"/>
+			<p>
+				The <a href="https://roman.gsfc.nasa.gov" target="_blank">Nancy Grace Roman Space Telescope</a> is a next-generation space-based
+				observatory that will provide high-resolution images of hundreds of millions of distant and faint galaxies. Think 
+				<a href="https://science.nasa.gov/mission/hubble/" target="_blank">Hubble Space Telescope (HST)</a>, but over an area roughly 10,000x the size of the moon! 
+				Estimating distances to these galaxies will be crucial for studies of galaxy evolution, cosmology, and supernovae.
+			</p>
+			<p>
+				Due to the expansion of space, light emitted by a distant galaxy gets stretched as it travels towards us. The amount of stretching &mdash; the redshift (z) &mdash;
+				can be used as a proxy for distance. Reliably measuring a redshift involves a costly method called spectroscopy. It is especially difficult to measure the redshifts
+				of distant, faint galaxies, which represent the majority of Roman observations. As a result, less than 1% of faint Roman galaxies will have reliable redshift measurements.
+				For the remaining 99%, scientific analyses will heavily rely on redshift measurements from the images directly, called photometric redshifts (photo-z's).
+			</p>
+			<p>
+				This sounds like a machine learning (ML) problem: there is a complicated, non-linear relationship between galaxy images and their redshifts, and we can learn 
+				it with a training set (obtained via spectroscopic measurements of redshifts, or spec-z's). Indeed, Convolutional Neural Networks (CNNs) have been used previously for this
+				exact purpose (see for example <a href="https://arxiv.org/abs/2112.03939", target="_blank">this paper</a>). However, previous studies have been limited to 
+				nearby, bright galaxies with low-resolution ground-based imaging. In this work, our aim was to see if similar deep learning methods can be used on Roman-like datasets
+				of faint, distant galaxies. In addition, we explored self-supervised methods and developed our own semi-supervised Photo-z Inference with a Triple-task Algorithm (PITA)
+				that can learn from hundreds of millions of unlabeled data; PITA will be crucial for Roman's image-rich but label-scarce datasets.
+			</p>
+
+			<h4> Roman-like Data before Roman </h4>
+			<img src="{{ '/images/data_painting.jpeg' | relative_url }}" alt="redshift" style="width: 100%; max-height: 250px; object-fit: cover;"/>
+			<p>
+				To test deep learning algorithms, we required a Roman-like imaging dataset which also included redshift labels to train with. 
+				HST has similar resolution and wavelength coverage to Roman, making it a natural choice. We curated a catalog of
+				~100,000 HST images, ~20,000 of which have reliable redshift labels. Each galaxy has four images in four different filters: F606W, F814W, F125W, F160W.
+				This data was collected as part of the 
+				<a href="https://www.ipac.caltech.edu/project/candels" target="_blank">CANDELS survey.</a> While Roman will have 3 orders of magnitude 
+				more data (!), our HST dataset was sufficient for prototyping deep learning algorithms.
+			</p>
+			<h5> Interlude: Magnitudes and Colors in Astronomy </h5>
+			<p>
+				In astronomy, we measure brightness using the logarithmic <a href="https://en.wikipedia.org/wiki/Magnitude_(astronomy)" target="_blank">magnitude</a> system. 
+				It is an interesting topic, and I encourage you to read more about it. In short, if you add up all the light coming from a galaxy or a star in a certain wavelength window,
+				and call it \(f\) (flux), the magnitude is defined as: 
+				\[m=-2.5\mathrm{log}\frac{f}{f_\mathrm{ref}}.\]
+				\(f_\mathrm{ref}\) is some reference flux, and it varies between different magnitude systems. Traditionally, fluxes of specific reference stars (like Vega)
+				have been used as \(f_\mathrm{ref}\). More recently, the AB magnitude is more commonly used.
+			</p>
+			<p>
+				Magnitude is measured per filter, so two filters \(i\) and \(j\) will have different magnitudes \(m_i\) and \(m_j\). For example, if a star is more red than blue, then it will have
+				a lower magnitude in the red filter (remember the negative sign in the magnitude definition!). To quantify this, we define color as the difference in magnitudes
+				\[c_{i,j}=m_i - m_j.\]
+				Colors strongly correlate with many properties of galaxies, including redshift. 
+			</p>
+			<!--
+				<br>
+				<br>
+				<a href="#fig:candels_images">Figure 1</a> shows example images of four galaxies. The different columns correspond to the HST image filters
+				F606W, F814W, F125W, and F160W, with the last column showing RGB composites of F160W (R), F125W (G), and F606W (B). The different rows show the four galaxies 
+				in decreasing order of brightness (\(m_\mathrm{F160W}\) is a <a href="https://en.wikipedia.org/wiki/Magnitude_(astronomy)" target="_blank">magnitude</a>,
+				and larger magnitudes correspond to fainter sources). These galaxies will look like blobs when observed with a ground-based telescope due to atmospheric blurring.
+				The space-based, high-resolution images spatially resolve very faint and high-redshift galaxies (\(z=2\)). This is crucial for using deep learning algorithms
+				to leverage pixel-level information.
+				<figure id="fig:candels_images">
+					<img src="{{ '/images/candels_image_examples.png' | relative_url }}" alt="candels images" style="max-width: 500px;"/>
+					<figcaption>Figure 1: Examples of HST cutout images for four different galaxies ordered by decreasing brightness in the F160W band.
+						Very faint galaxies up to redshift \(z=2\) have well-measured pixel-to-pixel variations; this information can potentially be leveraged
+						by deep learning algorithms.
+					</figcaption>
+				</figure>
+			-->
+
+			<h4> Methods and Results: Surprising Lessons </h4>
+			<img src="{{ '/images/tools.png' | relative_url }}" alt="tools" style="width: 100%; max-height: 250px; object-fit: cover;"/>
+			With ~100,000 galaxy images and ~20,000 redshift labels, we were able to test three different machine learning strategies:
+			<ul>
+				<li><strong>Fully-supervised learning</strong> &mdash; This is the most common and well-known learning strategy, where only the labeled data are used
+					to minimize a loss function that directly compares predicted labels to ground-truth values.
+				</li>
+				<li><strong>Self-supervised learning</strong> &mdash; Unlike fully-supervised learning, self-supervised techniques create pseudo-labels from the data or rely on the training
+					of surrogate tasks. Common examples include image reconstruction, predicting masked pixels, or creating different images of the same object and identifying
+					them as a pair. The goal is to use unlabeled data to learn low-dimensional (latent) representations that are useful for downstream tasks such as classification or regression.
+					Then, the labeled data can be used to fine-tune the network for a specific task, such as redshift prediction.
+					In this work, we used self-supervised contrastive learning (explained below).
+				</li>
+				<li><strong>Semi-supervised learning</strong> &mdash; This learning strategy can combine the best aspects of fully and self-supervised approaches, by simultaneously training
+					with unlabeled and labeled data and minimizing a loss function that combines a self-supervised loss with a prediction loss. The PITA algorithm
+					we developed is semi-supervised.
+				</li>
+			</ul>
+			<p>
+				The fully-supervised algorithm is straightforward: we trained a <a href="https://arxiv.org/abs/2201.03545" target="_blank">ConvNeXt</a><sup><a href="#fn1" id="ref1">1</a></sup>
+				CNN to predict redshift from images, using only the labeled data.
+				We compared the deep learning algorithms to a traditional photometry-based multi-layer perceptron (MLP). 
+				<a href="https://en.wikipedia.org/wiki/Photometry_(astronomy)" target="_blank">Photometry</a> is a technique that essentially involves
+				adding up all the light of a galaxy in a single filter. The photometry-based MLP is trained to predict redshift from the total
+				light in all four filters.
+				This baseline represents how photo-z's were obtained before deep learning.
+			</p>
+			<p>
+				Table 1 shows results of the different methods using three evaluation metrics, based upon the normalized difference
+				between the true (\(z_\mathrm{ref}\)) and predicted (\(z_\mathrm{pred}\)) redshift, \(\Delta{z} = \frac{z_{\text{ref}}-z_{\text{pred}}}{1+z_{\text{ref}}}\):
+				<ul>
+					<li>
+						The <strong>Bias</strong> \(\langle \Delta{z} \rangle\), defined as the mean of \(\Delta{z}\),
+						which measures the average value of the prediction error.
+					</li>
+					<li>
+						The <strong>normalized median absolute deviation (NMAD)</strong>, defined as
+						\(\sigma_{\text{NMAD}} = 1.4826\times\text{Median}\Big(|\Delta{z} - \text{Median}(\Delta{z})|\Big)\),
+						which provides a robust estimate of the spread in prediction errors.
+					</li>
+					<li>
+						The <strong>outlier fraction \(f_{\text{outlier}}\)</strong>, defined as the fraction of objects with
+						\(|\Delta{z}|>0.15\), which assesses the rate of catastrophic failures.
+					</li>
+				</ul>
+			</p>
+			<img src="{{ '/images/results_table.png' | relative_url }}" alt="tools" style="width: 100%; max-height: 400px; object-fit: cover;"/>
+			<p>
+				Our PITA algorithm performs best across the board, followed by the fully-supervised network. Surprisingly, the self-supervised
+				+ fine-tuned network does worse than the fully-supervised network. In order to understand this behavior, we must first understand
+				how contrastive learning works.
+			</p>
+			
+			<h5>Contrastive Learning</h5>
+			<p>
+				Contrastive learning offers a framework for constructing latent vectors (low-dimensional representations) of galaxy images that are invariant to specific transformations or views of the data. The goal is
+				to learn representations that capture intrinsic features of galaxies while remaining robust to our chosen augmentations. For this work, we chose random horizontal flips,
+				random rotation, jitter (randomly moving the center), and Gaussian noise.
+			</p>
+			<p>
+				In practice, we implemented <a href="https://arxiv.org/abs/1911.05722" target="_blank">MoCo</a> contrastive learning. We started by augmenting each image \(x\)
+				using our chosen set of transformations (T) to generate new images \(x^t=T(x)\). Augmented images derived from the same initial image (\(x_i^t,x_{i^+}^t=T(x_i),T(x_i)\))
+				form a "positive pair" (see <a href="#fig:candels_views">figure 2</a>), while those originating from different initial images (\(x_i^t,x_j^t=T(x_i),T(x_j)\)) are labeled as "negative pairs".
+				The training process then
+				aims to maximize some measure of similarity between positive pairs in latent space. Typically, the cosine similarity (\(S_C\)), defined between two vectors \((\boldsymbol{A},\boldsymbol{B})\),
+				is used:
+				\[S_C(\boldsymbol{A},\boldsymbol{B}) = \frac{\boldsymbol{A}\cdot\boldsymbol{B}}{||\boldsymbol{A}||\;||\boldsymbol{B}||},\]
+				where \(||\boldsymbol{A}||=\sum_{i}A_i^2\) is the magnitude of \(\boldsymbol{A}\). To prevent the trivial solution of collapsing all images to the same latent vector, the loss function incorporates an
+				additional repulsive term that minimizes the similarity between negative pairs.
+			</p>
+			<figure id="fig:candels_views" class="figure-side-by-side">
+				<img src="{{ '/images/candels_view1_view2_gaussian.png' | relative_url }}" alt="candels views" style="max-width: 400px;"/>
+				<figcaption>Figure 2: From a single galaxy image, we generate two positive views by applying random transformations. Starting with a 108x108 pixel image,
+					we apply a horizontal flip with 50% probability, followed by a random rotation (using bilinear interpolation). Then, we jitter the image and crop to the central
+					64x64 pixels. Finally, we add uncorrelated Gaussian noise. Since contrastive learning aims to maximize the similarity between two views, we did not
+					include any transformations that can alter redshift information, such as augmentations that change colors. 
+				</figcaption>
+			</figure>
+			<p>
+				In MoCo, contrastive learning is framed as a dictionary look-up task. Given the latent vector \(\boldsymbol{q}\) of an image (obtained by passing the transformed image through the encoder),
+				the latent vector \(\boldsymbol{k_+}\) of its positive pair, and the latent vectors \(\boldsymbol{k_i}\) of the remaining negative-pair images in the dictionary (\(K\) images), the
+				<a href="https://arxiv.org/abs/1807.03748" target="_blank">InfoNCE</a> loss function is defined as:
+				\[l_{q} = -\text{log}\frac{\exp(S_C(\boldsymbol{q},\boldsymbol{k}_+)/\tau)}
+					{\sum_{i=0}^{K}\exp(S_C(\boldsymbol{q},\boldsymbol{k}_i)/\tau)}.\]
+				Here, \(\tau\) is a temperature hyperparameter, and the sum is performed over all the vectors in the dictionary, including the positive one \(\boldsymbol{k_+}\). This
+				loss function can be interpreted as the categorical cross-entropy loss function for classifying \(\boldsymbol{q}\) as being the positive pair of \(\boldsymbol{k_+}\).
+			</p>
+			<p>
+				<a href="#fig:self_supervised_arch">Figure 3</a> shows the architecture for the self-supervised algorithm. As the primary encoder, we used ConvNeXt.
+				After training (see <a href="https://arxiv.org/abs/2602.10207" target="_blank">our paper</a> for details), the 128-dimensional latent space offers an efficient representation of 
+				galaxy images. 
+			</p>
+			<figure id="fig:self_supervised_arch">
+				<img src="{{ '/images/self_supervised_arch_new.png' | relative_url }}" alt="self-supervised arch" style="max-width: 100%;"/>
+				<figcaption>Figure 3: Architecture of the self-supervised contrastive learning algorithm.
+					An image encoder, consisting of a ConvNeXt CNN followed by an MLP, maps four-band galaxy images into a 128-dimensional latent space.
+					A projection head then maps these latent vectors to a 64-dimensional space where the contrastive loss is calculated.
+					This network is initially trained on unlabeled data with the objective of learning image representations that are similar for positive pairs
+					and dissimilar for negative pairs. After this pre-training phase, the projection head is replaced with another MLP,
+					and the whole network is fine-tuned to predict redshifts using only the labeled data.
+				</figcaption>
+			</figure>
+			<p>
+				Once the contrastive loss is minimized, we then used the labeled data to fine-tune the network for redshift prediction.
+				In effect, this fine-tuning step is the same as training 
+				a fully-supervised algorithm with the encoder weights all initialized to the values learned from the contrastive pre-training. 
+				Table 1 shows the results post fine-tuning.
+			</p>
+			<p>
+				The success of this method rests on a key assumption: that the latent space efficiently encodes redshift information. We should not expect
+				this a priori, since the loss function that is being minimized has no direct relation to redshift. 
+				In fact, the underperformance of this algorithm suggests that this assumption might not be true. 
+			</p>
+			<h5> Looking at the Latents </h5>
+			<img src="{{ '/images/magnifying_glass.png' | relative_url }}" alt="tools" style="width: 100%; max-height: 250px; object-fit: cover;"/>
+			<p>
+				The latent space compresses each galaxy image, which is 16,384-dimensional (64x64 pixels and 4 filters), into a 128-dimensional vector. 
+				In this sense, it offers a low-dimensional representation of galaxy images. However, 128 dimensions is still a lot, and impossible to visualize.
+				To overcome this, we used the Uniform Manifold Approximation and Projection algorithm (<a href="" target="_blank">UMAP</a>) to visualize how the latent
+				vectors correlate with physical properties. UMAP is a nonlinear dimensionality reduction algorithm that preserves both local and global topological structure.
+				We applied it to project the 128-dimensional latent vectors into 2D UMAP embeddings, enabling us to assess how effectively they encode relevant information
+				using scatter plots color-coded by the properties of interest.
+			</p>
+			<p>
+				<a href="#fig:self_supervised_umap">Figure 4</a> shows results based on the 2D UMAP embeddings of the self-supervised algorithm's latent vectors.
+				In the top panel, we divide the UMAP space into a grid and visualize the types of galaxies occupying each region by showing image cutouts of randomly selected
+				samples. The middle panels show trends with \(m_\mathrm{F160W}\), F125W - F160W color, and reference or true redshifts (\(z_\mathrm{ref}\)). The bottom-left 
+				and middle panels show trends with full-width at half-maximum (FWHM; measure of size assuming the galaxy looks like a Gaussian), and specific star formation rate
+				(sSFR; the rate of star formation divided by the mass of the galaxy). The bottom-right panel shows the predicted redshifts after fine-tuning (\(z_{pred}\)).
+			</p>
+			<figure id="fig:self_supervised_umap">
+				<img src="{{ '/images/self_supervised_umap_plots.png' | relative_url }}" alt="self-supervised umap" style="max-width: 100%;"/>
+				<figcaption>Figure 4: Two-dimensional UMAP embeddings of the self-supervised latent space. In the top panel, we divide the UMAP-derived
+					space into a $30\times30$ grid, select a random galaxy from each grid cell, and display its image cutout.
+					Galaxies in adjacent grid cells exhibit similar shapes and brightnesses but not necessarily similar colors.
+					The middle panels show the variations of \(m_\mathrm{F160W}\), F125W - F160W color, and \(z_\mathrm{ref}\) across the embedding space;
+					the bottom panels show the variations of F814W FWHM, LePhare sSFR, and redshift predictions for the test set after fine-tuning.
+					While there are clear perpendicular trends of \(m_\mathrm{F160W}\) and FWHM across the UMAP embedding space, this is not the case for redshift, color, or sSFR.
+					These trends should reflect what information is effectively encoded in the self-supervised latent space.
+					Interpolation in this space produces photo-z's that are significantly biased and have large variance, even after fine-tuning,
+					due to the lack of correspondence between latent space values and redshift.
+				</figcaption>
+			</figure>
+			<p>
+				The top panel shows that the embeddings form a sequence of increasing magnitude (decreasing brightness) that runs clockwise around the arc, and a roughly
+				orthogonal sequence of increasing size that extends radially outward. However, galaxies with different colors can be seen in neighboring cells, as can also be seen
+				in the \(m_\mathrm{F125W}-m_\mathrm{F160W}\) color panel. As a result, sSFR and redshift, which are both strongly correlated with color, are likewise not well ordered.
+			</p>
+			<p>
+				These observed trends in the UMAP embeddings reflect the information encoded in the self-supervised latent vectors, and they are problematic. These vectors
+				appear to primarily encode magnitude (brightness) and size, rather than color, redshift, or sSFR, leading to poor photo-z predictions. While these results
+				were suprising at first, in hindsight they really aren't. The InfoNCE loss function defined above does not include any color or redshift terms, and
+				separating galaxies by brightness and size seems to be enough to minimize this loss function. These are first-order properties that are easily obtained from the images.
+				Color and redshift are higher-order properties that are more difficult to encode. 
+			</p>
+			<p>
+				This qualitative UMAP analysis motivated us to develop PITA, which combines the contrastive loss with explicit objectives of predicting color and redshift,
+				thereby guiding the latent space toward representations that are more informative for the downstream photo-z task.
+			</p>
+			<h4> PITA (Semi-supervised) </h4>
+			<img src="{{ '/images/pita_bread.png' | relative_url }}" alt="tools" style="width: 100%; max-height: 250px; object-fit: cover;"/>
+			<p>
+				PITA jointly optimizes a contrastive loss \(L_\mathrm{contrastive}\), a color prediction loss \(L_\mathrm{color}\), and a redshift prediction loss \(L_z\),
+				to yield a combined loss \(L_\mathrm{PITA}\):
+				\[L_\mathrm{\texttt{PITA}} = L_{\text{contrastive}} + L_{\text{color}} + L_{\text{z}}.\]
+				The contrastive loss is defined as the average of the InfoNCE loss (defined above), averaged over all images in the batch. For the redshift loss, we use
+				the Huber loss function: 
+				\[L_z=L_\delta(y,f(\boldsymbol{x}))=\begin{cases}
+				\frac{1}{2}(y-f(\boldsymbol{x}))^2, & \text{if $|y-f(\boldsymbol{x})|\leq\delta$},\\
+				\delta(|y-f(\boldsymbol{x})|-\frac{1}{2}\delta), & \text{if $|y-f(\boldsymbol{x})|>\delta$},
+				\end{cases}\]
+				where \(y\) denotes the true redshift, and \(f(x)\) denotes the predicted redshift for input vector \(x\). We set the transition parameter to \(\delta=0.15\).
+				For the color loss, we use an L2 loss function:
+				\[L_{\text{color}} = \frac{1}{N}\sum_{i=1}^{N}|\boldsymbol{y}_i-\boldsymbol{f}(\boldsymbol{x}_i)|^2,\]
+				where \(N\) is the batch size, \(\boldsymbol{y_i}\) is the true value, and \(\boldsymbol{f(x_i)}\) is the predicted value. Here, \(\boldsymbol{y_i}\) is a four-dimensional vector representing
+				the three colors (F606W - F814W, F814W - F125W, and F125W - F160W) and a single magnitude (\(m_\mathrm{F160W}\)).
+			</p>
+			<p>
+				The contrastive loss does not require any labels to evaluate. Similarly, colors can be calculated from all the galaxy images, so all the data within a batch
+				contribute to these two loss terms. In contrast, only labeled images contribute to the redshift loss. If a batch contains no labeled examples, the redshift
+				loss is set to zero.
+			</p>
+			<p>
+				<a href="#fig:semi_supervised_arch">Figure 5</a> illustrates the architecture used for PITA. Similar to the previous architectures,
+				the encoder consists of a ConvNext CNN followed by an \(\text{MLP}_\text{encoder}\), which together process the four-band input images and output 128-dimensional latent vectors.
+				From this shared latent space, three task-specific MLPs further project these representations to calculate the loss: 
+				<ul>
+					<li>
+						The projection head, which is a single-hidden-layer MLP with 128 neurons that maps the 128-dimensional latent vector to a 64-dimensional space in which the contrastive loss is computed.
+					</li>
+					<li>
+						The color MLP (\(\text{MLP}_\text{color}\)), which consists of six hidden layers with [128, 128, 128, 128, 128, 64] neurons and outputs a 4-dimensional vector 
+						corresponding to F606W - F814W, F814W - F125W, F125W - F160W, and \(m_\text{F160W}\).
+					</li>
+					<li>
+						The redshift MLP (\(\text{MLP}_\text{redshift}\)), which also consists of six hidden layers with [128, 128, 128, 128, 128, 64] neurons and outputs a scalar redshift.
+					</li>
+				</ul>
+			</p>
+			<figure id="fig:semi_supervised_arch">
+				<img src="{{ '/images/semi_supervised_arch_new.png' | relative_url }}" alt="semi-supervised arch" style="max-width: 100%;"/>
+				<figcaption>Figure 5: Architecture of PITA. Input images are processed by an encoder consisting of a ConvNeXt CNN followed by an MLP
+					to obtain 128-dimensional latent vectors. Three separate task-specific MLPs further project these representations:
+					(1) a projection head that reduces the dimensionality for contrastive learning, (2) a color MLP that predicts photometric colors for all objects,
+					and (3) a redshift MLP that predicts redshift and is applied only to galaxies with labeled redshifts. By combining the loss functions from the three MLPs,
+					both labeled and unlabeled images are used to learn a latent space that encodes morphology, color, and redshift information.
+				</figcaption>
+			</figure>
+			<h5> Looking at PITA Latents </h5>
+			<p>
+				<a href="#fig:semi_supervised_umap">Figure 6</a> shows the 2D UMAP embeddings of the PITA latent vectors. In the top panel,
+				galaxies that are near each other in embedding space exhibit similar morphologies, colors, and brightnesses. This is reflected
+				in the smaller panels, which exhibit clear and smooth trends in magnitude, color, size (FWHM), sSFR, and redshift.
+			</p>
+			<figure id="fig:semi_supervised_umap">
+				<img src="{{ '/images/semi_supervised_umap_plots.png' | relative_url }}" alt="semi-supervised umap" style="max-width: 100%;"/>
+				<figcaption>Figure 6: Similar to Figure 4, but in this case applying UMAP to the representations obtained from PITA.
+					In addition to encoding brightness (\(m_\mathrm{F160W}\)) and size (FWHM), these representations also show much smoother trends of redshift, color, and sSFR across the latent space,
+					enabling improvements in photo-z estimates from latent vectors.
+				</figcaption>
+			</figure>
+			<p>
+				The smooth gradients of color, sSFR, and redshift across embedding space indicate that the color and redshift losses are 
+				properly aligning the PITA latent vectors to encode important galaxy properties. The fact that there is still a clear trend with
+				size (FWHM) indicates that, while the redshift and color losses help to align the latent space, the contrastive loss still encourages
+				the latent vectors to encode morphological information.
+			</p>
+			<h5> Scaling with the Number of Training Data </h5>
+			<p>
+				Deep learning can be viewed as a combination of feature extraction and regression. Initial layers learn to extract appropriate features
+				from images, while final layers perform a simple regression from those features to estimate redshift. From this perspective,
+				semi-supervised learning has a clear advantage over fully-supervised: the larger unlabeled data are used to learn informative features,
+				and the much smaller set of redshift labels are used to train the regression.
+			</p>
+			<p>
+				<a href="#fig:scaling">Figure 7</a> compares the performance of PITA to the remaining ML methods as a function of the size
+				of the redshift training set. Across all approaches, performance improved as the size of the labeled training set was increased, 
+				consistent with expectations for ML models. There appears to be an inflection point around ~10,000 data points, where the fully-supervised
+				deep learning algorithm starts to outperform the photometry-MLP. This is not surprising; deep learning CNNs are data-hungry, but they 
+				can outperform classical ML in many applications when provided sufficient training data. 
+			</p>
+			<figure id="fig:scaling">
+				<img src="{{ '/images/metrics_scaling_bright_and_all.png' | relative_url }}" alt="scaling" style="max-width: 100%;"/>
+				<figcaption>Figure 7: Scaling of performance metrics as a function of the number of labeled objects used in training the photometry-MLP,
+					fully-supervised, and PITA models, and in fine-tuning the self-supervised model. For next generation telescopes (including Roman),
+					the number of redshift labels will decrease significantly at greater magnitudes. Crucially, PITA outperforms all other methods 
+					regardless of the number of labels, but especially so when training sets are sparse, as will be relevant to the most difficult domains.
+				</figcaption>
+			</figure>
+			<p>
+				However, PITA outperformed all other methods across all performance metrics, even when very few redshift labels were used. This is 
+				because the contrastive and color losses take advantage of unlabeled data to learn informative latent vectors, and the small subset
+				of labeled examples is then used to better align those vectors with a redshift loss. The PITA latent space is therefore well suited for 
+				interpolation between sparse training redshifts, allowing optimal use of samples that are limited in size.
+			</p>
+			<p>
+				As telescopes like Roman push toward higher-redshift samples and fainter galaxies, obtaining spectroscopic redshift labels will become
+				increasingly difficult. The regimes of low and high number of available training objects (the ends of the x-axis in <a href="#fig:scaling">Figure 7</a>)
+				will correspond to faint and bright galaxies, respectively.
+				Leveraging unlabeled objects will therefore become crucial for Roman. Methods like PITA that can effectively leverage the vast
+				amounts of unlabeled data and that can exploit domain knowledge will yield the best possible photo-z estimates, helping to advance
+				studies focused on cosmology, galaxy evolution, and transient science.
+			</p>
+			<br>
+		</div>
+	</div>
+	<div class="footnotes">
+      <ol>                                                                                               
+          <li id="fn1">        
+				ConvNeXt is a deep CNN that is based on the ResNet design but modernized to incorporate improvements from vision transformers.                             
+              	<a href="#ref1">&#8617;</a>
+          </li>                                                                                          
+      </ol>                                                 
+  	</div> 
+</section>

@@ -1,0 +1,191 @@
+---
+layout: default
+title: Detecting Gravitational Waves with Generative AI
+---
+
+<section id="gw-full" class="page-section card-page">
+	<div class="project-header" style="background-image: url('{{ '/images/gw_header.png' | relative_url }}'); background-position: center;">
+		<span class="header-date">2024</span>
+		<h3>Detecting Gravitational Waves with Generative AI</h3>
+	</div>
+
+	<div class="section-inner">
+		<a href="{{ '/blog' | relative_url }}" class="back-link">&larr; Back to Blogs</a>
+
+		<div class="project">
+			<h4> Gravitational Waves and the Detection Challenge </h4>
+			<p>
+				Gravitational waves (GWs) are ripples in spacetime produced by violent astrophysical events, such as colliding black holes,
+				merging neutron stars, or exploding stars. First predicted by Einstein in 1916, they were directly detected for the first time
+				in 2015 by <a href="https://www.ligo.caltech.edu/page/faq" target="_blank">LIGO</a>
+				(Laser Interferometer Gravitational-Wave Observatory), ushering in a new era of multi-messenger astronomy.
+			</p>
+			<p>
+				LIGO operates two detectors separated by ~3,000 km: one in Hanford, WA and one in Livingston, LA.
+				Each detector uses a laser interferometer with 4-km arms to measure spacetime distortions smaller than one ten-thousandth
+				the diameter of a proton. This extraordinary sensitivity makes LIGO equally sensitive to an enormous variety of noise sources:
+				seismic vibrations, thermal fluctuations in the mirrors, quantum shot noise, and even distant traffic.
+				As a result, genuine GW signals are buried in a sea of noise that can look strikingly similar. However, signals are strongly
+				correlated between the two detectors, whereas noise is not; this makes it possible to detect GWs.
+			</p>
+			<p>
+				The central idea of this project is to frame detection as <strong>hypothesis testing</strong>: given two segments of data from
+				both detectors, are they consistent with noise? Or do they contain a GW signal? If the distribution of noise was known, for example
+				if it was a Gaussian, then this would be a simple p-value test. However, the noise in these detectors is a complicated, non-Gaussian
+				distribution. Luckily, modern generative AI algorithms excel at solving this exact problem. I used a <strong>normalizing flow</strong>
+				to learn the probability distribution of noise. A new segment is then flagged as a GW candidate
+				if it is assigned low probability under the learned noise model, i.e., if it looks like an outlier relative to what noise typically looks like.
+				A big advantage of this approach is that we don't need labeled gravitational wave detections to train this algorithm; it is completely
+				unsupervised. All we need are samples from the noise distribution.
+			</p>
+
+			<h4> Data </h4>
+			<p>
+				This project used a publicly available LIGO challenge dataset consisting of three classes of signals,
+				each represented as a pair of time series (one per detector) of length 200 samples (corresponding to ~50 ms):
+			</p>
+			<ul>
+				<li><strong>Background noise</strong> &mdash; 100,000 samples containing only detector noise, with no GW signal present.</li>
+				<li><strong>Binary Black Hole (BBH) mergers</strong> &mdash; 100,000 samples containing the characteristic
+					chirp waveform produced as two black holes inspiral and merge.</li>
+				<li><strong>Sine-Gaussian Low Frequency (SGLF) signals</strong> &mdash; 100,000 samples containing
+					a short-duration sinusoidal burst, representative of core-collapse supernovae or other compact sources.</li>
+			</ul>
+			<p>
+				The raw data has shape <code>(N, 2, 200)</code> &mdash; \(N\) samples, 2 detectors, 200 time steps.
+				The fundamental challenge is that noise and GW signals can look nearly identical in the time domain.
+				The figure below shows three representative examples: the top two panels are pure noise, and the bottom panel is a BBH merger.
+			</p>
+			<figure>
+				<img src="{{ '/images/gw_and_noise.png' | relative_url }}" alt="GW signals vs noise" style="max-width: 100%;"/>
+				<figcaption>Figure 1: Time-series signals from both LIGO detectors (Hanford and Livingston).
+					The top two panels show background noise samples; the bottom panel shows a BBH GW signal.
+					The signals are nearly indistinguishable by eye.
+				</figcaption>
+			</figure>
+
+			<h4> Feature Engineering: Cross-Spectral Density </h4>
+			<p>
+				Rather than training directly on the raw time series, I first transform each sample into a more
+				informative representation: the <strong>cross-spectral density (CSD)</strong> between the two detectors.
+			</p>
+			<p>
+				The CSD between signals \(x(t)\) and \(y(t)\) (from detectors 1 and 2) is defined as:
+				\[ C_{xy}(f) = X^*(f) \cdot Y(f), \]
+				where \(X(f)\) and \(Y(f)\) are the discrete Fourier transforms of each detector's signal, and \(\ast\) denotes complex conjugation.
+				Taking the absolute value \(|C_{xy}(f)|\) yields a 101-dimensional feature vector for each sample.
+			</p>
+			<p>
+				The CSD is a natural choice for GW detection for a key physical reason: a genuine GW signal arrives at both detectors
+				(with a small time delay due to the finite speed of light), producing <em>correlated</em> power across frequencies.
+				In contrast, noise at each detector arises from different local physical sources and is <em>uncorrelated</em> between detectors.
+				The CSD therefore acts as a natural filter that is sensitive to coherent astrophysical signals while suppressing incoherent noise.
+			</p>
+			<p>
+				After computing the CSD, each sample is standardized with <code>StandardScaler</code>, and then compressed via
+				Principal Component Analysis (PCA) retaining 70 components, which capture 95.08% of the total variance.
+				This dimensionality reduction removes redundant features and makes the downstream modeling more tractable.
+			</p>
+			<p>
+				To make this concrete, the figure below shows the CSD for two representative samples.
+				The noise sample (left) has cross-spectral power spread broadly and irregularly across frequencies with no dominant structure.
+				The BBH sample (right) shows a sharp, dominant peak at low frequencies from the correlated chirp signal arriving at both detectors.
+			</p>
+			<figure>
+				<img src="{{ '/images/csd_comparison.png' | relative_url }}" alt="CSD comparison: noise vs BBH" style="max-width: 100%;"/>
+				<figcaption>Figure 2: Cross-spectral density for a background noise sample (left) and a BBH signal (right).
+					The noise CSD is spread across a broad range of frequencies with no coherent structure, while the BBH CSD shows a sharp
+					low-frequency peak from the correlated chirp signal arriving at both detectors.
+				</figcaption>
+			</figure>
+
+			<h4> The Model: Normalizing Flows </h4>
+			<p>
+				A <strong>normalizing flow</strong> is a generative model that learns to transform a simple base distribution
+				(here, a 70-dimensional standard normal) into an arbitrary complex distribution via a sequence of invertible,
+				differentiable transformations. The key insight is the change-of-variables formula: given a bijective function
+				\(f: \mathbb{R}^d \rightarrow \mathbb{R}^d\) that maps latent variables \(z\) to data \(x = f^{-1}(z)\), the
+				log-probability of a data point is:
+				\[\log p_X(x) = \log p_Z\big(f(x)\big) + \log \left| \det J_f(x) \right|,\]
+				where \(p_Z\) is the base distribution and \(J_f\) is the Jacobian of \(f\).
+				Because both \(f\) and its inverse are known analytically, we can evaluate exact log-likelihoods &mdash;
+				unlike VAEs or GANs, which require approximations.
+			</p>
+
+			<h5> Architecture: Masked Autoregressive Flow </h5>
+			<p>
+				I used a <a href="https://arxiv.org/abs/1705.07057" target="_blank">Masked Autoregressive Flow (MAF)</a>,
+				which constructs the bijection \(f\) autoregressively. For each dimension \(i\), the transformation is:
+				\[ z_i = \frac{x_i - \mu_i(x_{1:i-1})}{\sigma_i(x_{1:i-1})}, \]
+				where \(\mu_i\) and \(\sigma_i\) are neural network outputs that depend only on the preceding dimensions,
+				enforcing the autoregressive structure via masking. This ensures the Jacobian is triangular and its determinant is
+				simply \(\prod_i \sigma_i^{-1}\), making the log-likelihood tractable.
+			</p>
+			<p>
+				The flow consists of 3 such autoregressive layers, each preceded by a <strong>reverse permutation</strong>
+				that shuffles the feature ordering so that different dimensions condition on each other across layers.
+				Each \(\mu_i\) and \(\sigma_i\) network has a hidden layer of width 16 (not to be confused with the
+				70-dimensional input/latent space; this is simply the number of units inside the small networks that
+				compute the per-dimension shift and scale). The model is trained with Adam (learning rate \(10^{-2}\), decayed to \(10^{-3}\) at epoch 30)
+				on 80,000 background noise samples, minimizing the negative log-likelihood:
+				\[ \mathcal{L} = -\frac{1}{N}\sum_{i=1}^N \log p_\theta(x_i). \]
+			</p>
+			<p>
+				Crucially, the flow is trained <em>only on background noise</em> &mdash; it has never seen a GW signal.
+				The goal is simply to learn the noise distribution as accurately as possible.
+			</p>
+			<p>
+				One way to check that the flow has converged is to verify that background noise samples,
+				when passed through \(f\), produce latent coordinates \(z = f(x)\) that follow \(\mathcal{N}(0, I)\).
+				If training succeeded, each coordinate \(z_i\) should be marginally distributed as a standard normal,
+				and the coordinates should be mutually uncorrelated, since that is the base distribution the flow is
+				trained to match. The figure below checks both: the histograms for four representative dimensions
+				closely track the \(\mathcal{N}(0,1)\) curve, and the cross-correlation matrix of all 70 dimensions
+				is near-diagonal, confirming convergence.
+			</p>
+			<figure>
+				<img src="{{ '/images/latent_histograms.png' | relative_url }}" alt="Latent space histograms" style="max-width: 100%;"/>
+				<figcaption>Figure 3: Latent space diagnostics for background noise samples.
+					<em>Top:</em> histograms of the latent coordinates \(z_i = f(x)_i\) for four representative dimensions
+					(0, 5, 20, and 50 out of 70), overlaid with the standard normal PDF &mdash; the close agreement confirms
+					the flow has learned to map the noise distribution to \(\mathcal{N}(0, I)\).
+					<em>Bottom:</em> cross-correlation matrix of all 70 latent dimensions; the near-diagonal structure shows
+					the learned coordinates are essentially uncorrelated, as expected for independent standard normals.
+				</figcaption>
+			</figure>
+
+			<h4> Detection as Anomaly Detection </h4>
+			<p>
+				Once the noise distribution is learned, GW detection becomes a simple thresholding problem.
+				A new sample \(x\) is flagged as a GW candidate if \(\log p_\theta(x)\) falls below a threshold \(\tau\):
+				\[ \hat{y}(x) = \begin{cases} \text{GW candidate} & \log p_\theta(x) < \tau \\ \text{noise} & \text{otherwise.} \end{cases} \]
+				GW signals, having a different physical origin than detector noise, are expected to look like outliers
+				under the learned noise model and receive anomalously low log-probabilities.
+				By sweeping \(\tau\) across all values we trace out a Receiver Operating Characteristic (ROC) curve.
+			</p>
+
+			<h4> Results </h4>
+			<figure>
+				<img src="{{ '/images/ROC_curve.png' | relative_url }}" alt="ROC curve" style="max-width: 55%;"/>
+				<figcaption>Figure 4: ROC curves for GW detection using the log-probability threshold. The normalizing flow
+					achieves an AUC of 0.92 for SGLF signals and 0.89 for BBH signals.
+				</figcaption>
+			</figure>
+			<p>
+				The normalizing flow achieves an AUC (Area Under the ROC Curve) of <strong>0.92</strong> for SGLF signals
+				and <strong>0.89</strong> for BBH signals, indicating strong discriminating power in both cases.
+				The difference in performance is physically meaningful:
+				SGLF signals are short sinusoidal bursts whose cross-spectral power is concentrated in a narrow frequency band,
+				making them easy to identify as outliers. BBH chirps spread their energy across a broader range of frequencies
+				and more closely resemble the noise distribution in cross-spectral space, resulting in a somewhat lower AUC.
+			</p>
+			<p>
+				This approach has a compelling advantage over purely supervised classifiers: the flow is trained exclusively on noise,
+				requiring <em>no labeled GW examples</em> at training time. It can therefore generalize to new GW signal morphologies
+				that were not anticipated during training &mdash; an important property for a detection system operating in the real world,
+				where the space of possible astrophysical signals is vast.
+			</p>
+			<br>
+		</div>
+	</div>
+</section>

@@ -1,0 +1,12 @@
+title: Ashod Khederlarian
+description: PhD Student, University of Pittsburgh
+url: "https://ashodkh.github.io"
+baseurl: ""
+
+# Build
+markdown: kramdown
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.txt
+  - LICENSE.txt
