@@ -7,7 +7,8 @@ title: Estimating Distances to Galaxies Using Semi-Supervised Deep Learning
 	<div class="project-header" style="background-image: url('{{ '/images/cosmic_cartography.png' | relative_url }}'); background-position: top;">
 		<span class="header-date">2026</span>
 		<h3>Semi-supervised Deep Learning for Galaxy Distance Estimation</h3>
-		<a href="https://youtu.be/uxc27HPdLaM?t=00" target="_blank" class="talk-link">Talk at Harvard AstroAI 2024 &rarr;</a>
+		<a href="https://www.youtube.com/watch?v=HXIisGsqmV0" target="_blank" class="talk-link">Talk at Harvard AstroAI 2025 &rarr;</a>
+		<a href="https://iopscience.iop.org/article/10.3847/1538-3881/ae5dc4" target="_blank" class="talk-link">Published in The Astronomical Journal</a>
 	</div>
 
 	<div class="section-inner">
@@ -60,7 +61,8 @@ title: Estimating Distances to Galaxies Using Semi-Supervised Deep Learning
 				Magnitude is measured per filter, so two filters \(i\) and \(j\) will have different magnitudes \(m_i\) and \(m_j\). For example, if a star is more red than blue, then it will have
 				a lower magnitude in the red filter (remember the negative sign in the magnitude definition!). To quantify this, we define color as the difference in magnitudes
 				\[c_{i,j}=m_i - m_j.\]
-				Colors strongly correlate with many properties of galaxies, including redshift. 
+				Colors strongly correlate with many properties of galaxies, including redshift. Therefore, before deep CNNs allowed us to use the images directly,
+				astronomers used colors and magnitudes to estimate redshifts.
 			</p>
 			<!--
 				<br>

@@ -108,8 +108,7 @@ title: Detecting Gravitational Waves with Generative AI
 				log-probability of a data point is:
 				\[\log p_X(x) = \log p_Z\big(f(x)\big) + \log \left| \det J_f(x) \right|,\]
 				where \(p_Z\) is the base distribution and \(J_f\) is the Jacobian of \(f\).
-				Because both \(f\) and its inverse are known analytically, we can evaluate exact log-likelihoods &mdash;
-				unlike VAEs or GANs, which require approximations.
+				Because both \(f\) and its inverse are known analytically, we can evaluate exact log-likelihoods.
 			</p>
 
 			<h5> Architecture: Masked Autoregressive Flow </h5>
@@ -181,9 +180,8 @@ title: Detecting Gravitational Waves with Generative AI
 			</p>
 			<p>
 				This approach has a compelling advantage over purely supervised classifiers: the flow is trained exclusively on noise,
-				requiring <em>no labeled GW examples</em> at training time. It can therefore generalize to new GW signal morphologies
-				that were not anticipated during training &mdash; an important property for a detection system operating in the real world,
-				where the space of possible astrophysical signals is vast.
+				requiring <em>no labeled GW examples</em> at training time. It can therefore generalize to new GW signals emitted from
+				events for which we don't have good physical models.
 			</p>
 			<br>
 		</div>
