@@ -18,12 +18,12 @@ title: How Good Are Your Uncertainties?
 			<p>
 				There are endless problems in physics where simple point estimates are not enough; we would prefer
 				probability distribution functions (PDFs) of parameters. For example, cosmological and galaxy evolution studies can be sensitive to not
-				only how far away a galaxy (or a group of galaxies) is, but to what is the probability that it is at a distance z.
+				only how far away a galaxy (or a group of galaxies) is, but to the probability that it is at a distance z.
 				Beyond a measurement of the most likely parameter value, these PDFs also provide a sense of uncertainty via probabilities 
 				for all possible parameter values.
 			</p>
 			<p>
-				Every field, including astronomy, will have a myriad of methods that provide different PDFs for the same parameter.
+				Every field, including astronomy, has a myriad of methods that provide different PDFs for the same parameter.
 				These methods can be empirical (think data-driven, machine learning), or based on a physical model (and assumptions that come with it). 
 				Either way, which of the distributions are correct? How can we quantify the performance of these methods? In this blog, I will focus on
 				a canonical example in astrophysics: photometric redshift (photo-z) estimation. You can think of 
@@ -31,30 +31,52 @@ title: How Good Are Your Uncertainties?
 				<a href="{{ '/research/photo-zs.html' | relative_url }}">my blog on estimating distances to galaxies with deep learning</a> for more on redshift!
 			</p>
 
-			<h4> Data </h4>
+			<h4> The Truth is Unknown </h4>
+			<img src="{{ '/images/beer_samples.png' | relative_url }}" alt="beer_samples" style="width: 100%; max-height: 250px; object-fit: cover; object-position: center"/>
 			<p>
 				The main difficulty stems from the fact that we do not know the true PDFs. For a galaxy, we estimate its distance (z) based on its
 				images (x). Our algorithms therefore provide an estimate of the PDF conditioned on the galaxy images (x),
 				or a conditonal density estimate (CDE) \(\tilde{P}(z|x).\) If we know the true conditional density \(P(z|x)\), then we can use
 				many metrics that measure "distances" between probability distributions,
-				such as <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence" target="_blank">KL divergence</a>
-				and <a href="https://en.wikipedia.org/wiki/Earth_mover%27s_distance" target="_blank">Earth mover's distance</a>. If \(P(z|x)\) 
-				is not available, then we have to use point estimates.
+				such as <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence" target="_blank">KL divergence</a>,
+		        <a href="https://en.wikipedia.org/wiki/Earth_mover%27s_distance" target="_blank">Earth mover's distance</a>, or 
+				CDE Loss. The CDE loss is particularly useful because it can also be used when the true distribution is not known (more on this below). 
+				It is an extension of the mean squared error loss and is defined as:
+				\[L_\mathrm{CDE}(P,\tilde{P}) = \int\int[P(z|x) - \tilde{P}(z|x)]^2dydP(x).\]
+				If \(P(z|x)\) is not available, then our only option is to use samples from it.
 			</p>
 			<p>
 				We can obtain a very accurate ("true") measurement of distance via spectroscopy, however that gives us only a single sample 
-				from the CDE \(P(z|x)\). Even if we make multiple spectroscopic measurements, that does not mean we will have multiple samples from \(P(z|x)\).
+				from \(P(z|x)\). Even if we make multiple spectroscopic measurements, that does not mean we will have multiple samples from \(P(z|x)\).
 				We will only have multiple samples from \(P(z|s)\), where \(s\) is the spectrum of a galaxy; <sup><a href="#fn1" id="ref1">1</a></sup>
 				this does not help us with \(P(z|x)\). In short, since the true conditional density \(P(z|x)\) is not available,
 				we will use many pairs of \((z,x)\) (test dataset), obtained via spectroscopic measurements, to evaluate the performance of these algorithms.
 			</p>
+
+			<h4> Evaluation Methods</h4>
+			<h5>CDE Loss</h5>
+			<p>
+				As mentioned above, the CDE loss between the true and estimated distributions can not be calculated if \(P(z|x)\)
+				is not known. However, it can be estimated up to a constant with the following:
+				\[\begin{align}
+					L_\mathrm{CDE}(P,\tilde{P}) &= \int\int[P(z|x) - \tilde{P}(z|x)]^2dzdP(x) \\
+					&= \int\int [P^2(z|x) + \tilde{P}^2(z|x) - 2P(z|x)\tilde{P}(z|x)]dzdP(x) \\
+					&= \mathbb{E}_x\big[\int\tilde{P}^2(z|x)dz\big] - 2\mathbb{E}_{x,z}\big[\tilde{P}(z|x)\big] + K_P.
+				\end{align}\]
+				Where \(\mathbb{E}\) represents averaging over samples in the test dataset. Because the constant \(K_P\) is unknown,
+				this estimate is only useful for comparing the performance of multiple predictions \(\tilde{P}.\) Methods with lower
+				\(L_\mathrm{CDE}\) are considered to be better. In fact,
+				<a href="https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-11/issue-2/Converting-high-dimensional-regression-to-high-dimensional-conditional-density-estimation/10.1214/17-EJS1302.full"
+				target="_blank">it can be used as a loss function</a>. 
+			</p>
+			<h5> Q-Q Plot </h5>
 			<p>
 				Suppose that the true conditional density is a Gaussian, \(P(z|x) = N(\mu_\mathrm{true},\sigma_\mathrm{true})\),
 				and our predicted CDE is also a Gaussian with the same \(\sigma_\mathrm{true}\) but centered at a different location,
 				\(\tilde{P}(z|x)=N(\mu_\mathrm{pred},\sigma_\mathrm{true})\). <a href="#fig:gaussian_example">Figure 1</a> illustrates
 				both distributions, along with a single sample point (\(z_i\) shown as an X) from our test dataset. The right panel shows
 				the cumulative distribution functions (CDFs) for these PDFs. Notice how when we use the value \(z_i\) to calculate its probability or 
-				CDF (with our estimated CDE), we obtain values that are very different from truth.   
+				CDF (with our estimated CDE), we obtain values that are very different from truth.  
 			</p>
 
 			<figure id="fig:gaussian_example">
