@@ -34,6 +34,14 @@ ul li { margin-bottom: 0.4em; text-align: justify; }
 
 img { max-width: 100%; height: auto; display: block; }
 
+/* Let wide display equations scroll horizontally instead of widening the page */
+mjx-container[display="true"] {
+	overflow-x: auto;
+	overflow-y: hidden;
+	max-width: 100%;
+	padding-bottom: 0.25em;
+}
+
 /* ── Top Navigation ── */
 
 #topnav {
@@ -509,6 +517,7 @@ figure.figure-side-by-side {
 
 figure.figure-side-by-side img {
 	flex-shrink: 0;
+	max-width: 400px;
 }
 
 figure.figure-side-by-side figcaption {
@@ -580,4 +589,11 @@ figure.figure-side-by-side figcaption {
 
 	.page-section { padding: 3.5em 1.5em; }
 	.project .side-by-side { flex-direction: column; }
+	figure.figure-side-by-side { flex-direction: column; gap: 0.8em; align-items: stretch; }
+	figure.figure-side-by-side img { max-width: 100%; }
+
+	.card-page { padding: 1em; }
+	.card-page > .project-header { margin: -1em -1em 0; }
+	.card-page .project { padding: 0.5em 1.2em 2em; }
+	.card-page .section-inner .back-link { padding: 1em 1.2em 0; }
 }

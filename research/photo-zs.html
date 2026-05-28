@@ -153,7 +153,7 @@ title: Estimating Distances to Galaxies Using Semi-Supervised Deep Learning
 				additional repulsive term that minimizes the similarity between negative pairs.
 			</p>
 			<figure id="fig:candels_views" class="figure-side-by-side">
-				<img src="{{ '/images/candels_view1_view2_gaussian.png' | relative_url }}" alt="candels views" style="max-width: 400px;"/>
+				<img src="{{ '/images/candels_view1_view2_gaussian.png' | relative_url }}" alt="candels views"/>
 				<figcaption>Figure 2: From a single galaxy image, we generate two positive views by applying random transformations. Starting with a 108x108 pixel image,
 					we apply a horizontal flip with 50% probability, followed by a random rotation (using bilinear interpolation). Then, we jitter the image and crop to the central
 					64x64 pixels. Finally, we add uncorrelated Gaussian noise. Since contrastive learning aims to maximize the similarity between two views, we did not
