@@ -1,12 +1,12 @@
 ---
 layout: default
-title: How Good Are Your Uncertainties? 
+title: Evaluating Predicted Probability Distributions 
 ---
 
 <section id="uq-full" class="page-section card-page">
-	<div class="project-header" style="background-image: url('{{ '/images/foggy_road.png' | relative_url }}'); background-position: center 70%;">
-		<span class="header-date">2024</span>
-		<h3>How Good Are Your Uncertainties?</h3>
+	<div class="project-header" style="background-image: url('{{ '/images/foggy_boat.png' | relative_url }}'); background-position: center 70%;">
+		<span class="header-date">2026</span>
+		<h3>Evaluating Predicted Probability Distributions</h3>
 	</div>
 
 	<div class="section-inner">
@@ -25,24 +25,25 @@ title: How Good Are Your Uncertainties?
 			<p>
 				Every field, including astronomy, has a myriad of methods that provide different PDFs for the same parameter.
 				These methods can be empirical (think data-driven, machine learning), or based on a physical model (and assumptions that come with it). 
-				Either way, which of the distributions are correct? How can we quantify the performance of these methods? In this blog, I will focus on
-				a canonical example in astrophysics: photometric redshift (photo-z) estimation. You can think of 
-				<a href="https://en.wikipedia.org/wiki/Redshift" target="_blank"> redshift </a> as a proxy for a galaxy's distance from Earth. Checkout 
+				Either way, which of the distributions are correct? How can we quantify the performance of these methods?
+				In this blog, I will focus on the canonical astrophysics example of photometric redshift (photo-z) estimation. However, these methods
+				are applicable in other contexts as well. You can think of 
+				<a href="https://en.wikipedia.org/wiki/Redshift" target="_blank"> redshift </a> as a proxy for a galaxy's distance from Earth. Check out
 				<a href="{{ '/research/photo-zs.html' | relative_url }}">my blog on estimating distances to galaxies with deep learning</a> for more on redshift!
 			</p>
 
-			<h4> The Truth is Unknown </h4>
-			<img src="{{ '/images/beer_samples.png' | relative_url }}" alt="beer_samples" style="width: 100%; max-height: 250px; object-fit: cover; object-position: center"/>
+			<h4> Samples of Truth </h4>
+			<img src="{{ '/images/wine_samples.png' | relative_url }}" alt="wine_samples" style="width: 100%; max-height: 250px; object-fit: cover; object-position: center 40%"/>
 			<p>
 				The main difficulty stems from the fact that we do not know the true PDFs. For a galaxy, we estimate its distance (z) based on its
 				images (x). Our algorithms therefore provide an estimate of the PDF conditioned on the galaxy images (x),
-				or a conditonal density estimate (CDE) \(\tilde{P}(z|x).\) If we know the true conditional density \(P(z|x)\), then we can use
+				or a conditional density estimate (CDE) \(\tilde{P}(z|x).\) If we know the true conditional density \(P(z|x)\), then we can use
 				many metrics that measure "distances" between probability distributions,
 				such as <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence" target="_blank">KL divergence</a>,
 		        <a href="https://en.wikipedia.org/wiki/Earth_mover%27s_distance" target="_blank">Earth mover's distance</a>, or 
-				CDE Loss. The CDE loss is particularly useful because it can also be used when the true distribution is not known (more on this below). 
+				CDE Loss. The CDE loss is particularly useful because it can be estimated even when the true distribution is not known (more on this below). 
 				It is an extension of the mean squared error loss and is defined as:
-				\[L_\mathrm{CDE}(P,\tilde{P}) = \int\int[P(z|x) - \tilde{P}(z|x)]^2dydP(x).\]
+				\[L_\mathrm{CDE}(P,\tilde{P}) = \int\int[P(z|x) - \tilde{P}(z|x)]^2dzdP(x).\]
 				If \(P(z|x)\) is not available, then our only option is to use samples from it.
 			</p>
 			<p>
@@ -53,30 +54,31 @@ title: How Good Are Your Uncertainties?
 				we will use many pairs of \((z,x)\) (test dataset), obtained via spectroscopic measurements, to evaluate the performance of these algorithms.
 			</p>
 
-			<h4> Evaluation Methods</h4>
+			<h4> Methods </h4>
+			<img src="{{ '/images/beach_umbrellas.png' | relative_url }}" alt="beach_umbrellas" style="width: 100%; max-height: 250px; object-fit: cover; object-position: center 95%"/>
 			<h5>CDE Loss</h5>
 			<p>
-				As mentioned above, the CDE loss between the true and estimated distributions can not be calculated if \(P(z|x)\)
+				As mentioned above, the CDE loss between the true and estimated distributions cannot be calculated if \(P(z|x)\)
 				is not known. However, it can be estimated up to a constant with the following:
 				\[\begin{align}
 					L_\mathrm{CDE}(P,\tilde{P}) &= \int\int[P(z|x) - \tilde{P}(z|x)]^2dzdP(x) \\
 					&= \int\int [P^2(z|x) + \tilde{P}^2(z|x) - 2P(z|x)\tilde{P}(z|x)]dzdP(x) \\
-					&= \mathbb{E}_x\big[\int\tilde{P}^2(z|x)dz\big] - 2\mathbb{E}_{x,z}\big[\tilde{P}(z|x)\big] + K_P.
+					&= \mathbb{E}_x\big[\int\tilde{P}^2(z|x)dz\big] - 2\mathbb{E}_{x,z}\big[\tilde{P}(z|x)\big] + K_P,
 				\end{align}\]
-				Where \(\mathbb{E}\) represents averaging over samples in the test dataset. Because the constant \(K_P\) is unknown,
+				where \(\mathbb{E}\) represents averaging over samples in the test dataset. Because the constant \(K_P\) is unknown,
 				this estimate is only useful for comparing the performance of multiple predictions \(\tilde{P}.\) Methods with lower
 				\(L_\mathrm{CDE}\) are considered to be better. In fact,
 				<a href="https://projecteuclid.org/journals/electronic-journal-of-statistics/volume-11/issue-2/Converting-high-dimensional-regression-to-high-dimensional-conditional-density-estimation/10.1214/17-EJS1302.full"
 				target="_blank">it can be used as a loss function</a>. 
 			</p>
-			<h5> Q-Q Plot </h5>
+			<h5> PITs and P-P Plots </h5>
 			<p>
 				Suppose that the true conditional density is a Gaussian, \(P(z|x) = N(\mu_\mathrm{true},\sigma_\mathrm{true})\),
 				and our predicted CDE is also a Gaussian with the same \(\sigma_\mathrm{true}\) but centered at a different location,
 				\(\tilde{P}(z|x)=N(\mu_\mathrm{pred},\sigma_\mathrm{true})\). <a href="#fig:gaussian_example">Figure 1</a> illustrates
 				both distributions, along with a single sample point (\(z_i\) shown as an X) from our test dataset. The right panel shows
-				the cumulative distribution functions (CDFs) for these PDFs. Notice how when we use the value \(z_i\) to calculate its probability or 
-				CDF (with our estimated CDE), we obtain values that are very different from truth.  
+				the cumulative distribution functions (CDFs) of these PDFs. Notice how when we use the value \(z_i\) to calculate its estimated
+				probability or CDF (with the red estimated CDE), we obtain values that are very different from truth.  
 			</p>
 
 			<figure id="fig:gaussian_example">
@@ -98,27 +100,56 @@ title: How Good Are Your Uncertainties?
 					&= y.
 					\end{align}\]
 
-				Therefore, since the CDF of \(\gamma\) is linear, then \(\gamma\) follows a uniform distribution.
-				This means that if we have a bunch of samples \(z_i\) from \(P(z|x)\), and we calculate \(\gamma_i=C(z_i|x)\), then \(\gamma\)
+				Therefore, since the CDF of \(\gamma\) is linear, \(\gamma\) follows a uniform distribution.
+				This means that if we have a bunch of samples \(z_i\) from \(P(z|x)\), and we calculate \(\gamma_i=C_{z}(z_i|x)\), then \(\gamma\)
 				will follow a uniform distribution. This is illustrated in the left panel of <a href="#fig:pit_distributions">figure 2</a>. Importantly, if we calculate
-				\(\tilde{\gamma}_i=\tilde{C}(z_i|x)\) from our estimate \(\tilde{C}\), then \(\tilde{\gamma}_i\) will be uniform
-				<strong>if and only if \(\tilde{C} = C\)</strong>, i.e., if our estimated PDF is the true PDF. If this is not the case, then \(\tilde{\gamma}\)
+				\(\tilde{\gamma}_i=\tilde{C}_{z}(z_i|x)\) from our estimate \(\tilde{C}_{z}\), then \(\tilde{\gamma}_i\) will be uniform
+				<strong>if and only if \(\tilde{C}_{z} = C_{z}\)</strong>, i.e., if our estimated PDF is the true PDF. If this is not the case, then \(\tilde{\gamma}\)
 				will not be uniform. This is illustrated in the right panel of <a href="#fig:pit_distributions">figure 2</a>. 
 			</p>
 
 			<figure id="fig:pit_distributions">
 				<img src="{{ '/images/pit_distributions.png' | relative_url }}" alt="pit distributions" style="max-width: 700px;"/>
-				<figcaption>Figure 2: PIT distributions from the true CDF (left) and the estimated CDF (right).
+				<figcaption>Figure 2: PIT distributions from the true CDF (left) and the estimated CDF (right). 300 samples (\(z_i\)) were generated from the true
+					distribution \(P(z|x)\) (corresponding to accurate real-world measurements). These samples have uniform PITs if calculated using \(C(z_i|x)\),
+					and non-uniform PITs if calculated using a wrong estimate \(\tilde{C}(z_i|x)\).
 				</figcaption>
 			</figure>
 			
+			<p>
+				<a href="#fig:pit_cdfs">Figure 3</a> shows the CDFs of both \(\gamma\) and \(\tilde{\gamma}\). Indeed we see that the left panel shows a linear
+				relationship, whereas the right panel shows a significant deviation from linearity. These figures are examples of 
+				<a href="https://en.wikipedia.org/wiki/P%E2%80%93P_plot" target="_blank">P-P plots</a>, because we are plotting the empirical CDF
+				against our estimated one.
+
+			</p>
+			<figure id="fig:pit_cdfs">
+				<img src="{{ '/images/pit_cdfs.png' | relative_url }}" alt="pit cdfs" style="max-width: 700px;"/>
+				<figcaption>Figure 3: CDFs of the PITs calculated with the true \(P(z|x)\) (left) and the estimated \(\tilde{P}(z|x)\) (right).
+					If the estimated PDF is correct, then the CDF should be uniform.
+				</figcaption>
+			</figure>
+
+			<p>
+				Intuitively, we are simply checking whether the CDE conforms to the frequentist interpretation of probability. Using test samples,
+				we are checking whether the fraction of times samples fall within an arbitrary interval [\(z_1,z_2\)] is equal to the integral of 
+				the CDE between [\(z_1,z_2\)]. If the CDE is well-calibrated, then this should be true. We are checking for coverage probability.
+			</p>
+			<p>
+				As mentioned previously, we unfortunately will not have many samples from \(P(z|x)\). Instead, we will only have a single
+				sample from each \(P(z|x_i)\), which are represented by the pairs \((z_i,x_i).\) As a result, we can only perform the above
+				calculations globally &mdash; we can calculate \(\tilde{\gamma}_i\) for each object, and check if they are uniform. Similarly,
+				we can estimate the CDE loss only globally. Ideally, we would also like to check conditional coverage. Across input space (\(x\)),
+				the coverage probability can be incorrect in equal but opposite ways, making the global coverage look correct. That is 
+				a future blog post!
+			</p>
 			<br>
 		</div>
 	</div>
 	<div class="footnotes">
       <ol>                                                                                               
           <li id="fn1">        
-				Typically, a galaxy's spectrum provides a very accurate measurement of redshift, so we assume \(P(z|s) = \delta(z)\). Where \(\delta\)
+				Typically, a galaxy's spectrum provides a very accurate measurement of redshift, so we assume \(P(z|s) = \delta(z)\), where \(\delta\)
 				is the Dirac delta function.                            
               	<a href="#ref1">&#8617;</a>
           </li>                                                                                          
